@@ -1,0 +1,14 @@
+*.pdf
+*.bm
+*.cl
+*.cm
+*.uvf
+*.mp/
+*.im/
+*.vis
+*.png
+*.fits
+.*.swp
+*~
+.miriadhis
+.mfits.pro.swo
