@@ -18,16 +18,18 @@ plt.close()
 #pa = math.radians( input('Please enter the SKY PA in degrees: '))
 #inc = math.radians( input('Please enter the inclination of the disk in degrees: '))
 #datatype = raw_input('Please enter \'line\' for line emission data or \'cont\' for continuum data: ')
+#   if dataype is 'line':
+#       chansin =input('Please enter the indices of the channel(s) you would like to read in. If you would like to look at the first through fifth channels for example, you would enter \'1,5\': ')
+#       chans = range(chansin[0]-1,chans[1])
 #outputtype = raw_input('Please enter \'rad\' for radial averaging, \'im\' for imaging, or \'both\' for both: ')
 #if outputtype in ('im', 'both'):
 #   image = raw_input('Please enter the filename you would like your image(s) to have, not including the filetype: ')
-#   if datatype == 'line':
-#      imchans = 'line=channel,' + raw_input('Please enter the channels you would like to image in standard line miriad format, of the form  \'number of channels,starting channel index,channel width,step size.\' Indexing starts at 1: ')    
-#       chandims = 'nxy=' + raw_input('Please enter the dimensions of the channel maps to be shown on each page, in the form \'columns,rows\': ')
+#   if datatype is 'line':
+#       momchans = raw_input('Please enter \'moment\' if you would like to create a zeroth moment map, or \'channel\' if you would like to create channel maps: ')
+#       if momchans is 'channel':
+#           imchans = 'line=channel,' + raw_input('Please enter the channels you would like to image in standard line miriad format, of the form  \'number of channels,starting channel index,channel width,step size.\' Indexing starts at 1: ')    
+#           chandims = 'nxy=' + raw_input('Please enter the dimensions of the channel maps to be shown on each page, in the form \'columns,rows\': ')
 #if outputtype in ('rad', 'both'):
-#   if dataype == 'line':
-#       chansin =input('Please enter the indices of the channel(s) you would like to average, keeping in mind that indexing starts at 0 rather than one. For example, one might enter \'5,12\' if they wanted channels 6 through 12. If you would only like to average one channnel, please enter the index of the channel and then the index of the next channel (e.g. \'2,3\') ')
-#       chans = range(chans[0],chans[1])
 #    bins = input('Please enter the number of bins you would like: ')
 #    binning = raw_input('Please enter \'log\' for logarithmic binning or \'lin\' for linear binning: ')
 #    try:
@@ -53,9 +55,10 @@ deltara=0
 deltadec=0
 xlim = 300
 datatype= 'line'
-imchans = 'line=channel,'+'100,1,1,1'
+imchans = 'line=channel,'+'23,1,1,1'
 chandims = 'nxy=6,3'
-    
+chans = range(1,23)
+momchans = 'channel'    
 
 
 #Reading in fits file/data (assuming ALMA data)
@@ -69,51 +72,37 @@ v = data['VV']
 visnum=len(u)
 
 
-#Reading in line emission visibilitites//weights and calculating phase shifts
-if outputtype in ('rad', 'both'):
-    if datatype == 'line':
-        chans = range(0,250)
-        rlxx = rlimwt[:,0,0,0,chans,0,0]
-        rlyy = rlimwt[:,0,0,0,chans,1,0]
-        imxx = rlimwt[:,0,0,0,chans,0,1]
-        imyy = rlimwt[:,0,0,0,chans,1,1]
-        wtxx = rlimwt[:,0,0,0,chans,0,2]
-        wtyy = rlimwt[:,0,0,0,chans,1,2]
-        rl = np.array((rlxx*wtxx+rlyy*wtyy)/(wtxx+wtyy))
-        im = np.array((imxx*wtxx+imyy*wtyy)/(wtxx+wtyy))
-        wt = 4.0/(1.0/wtxx + 1.0/wtyy)
-        amp=np.sqrt(rl**2+im**2)
+#Reading in visibilitites//weights and calculating phase shifts
+if datatype is 'cont':
+    chans = range(header['NAXIS4'])
+if datatype is 'line':
+    if momchans is 'moment':
+        chans = range(header['NAXIS4'])
+rlxx = rlimwt[:,0,0,0,chans,0,0]
+rlyy = rlimwt[:,0,0,0,chans,1,0]
+imxx = rlimwt[:,0,0,0,chans,0,1]
+imyy = rlimwt[:,0,0,0,chans,1,1]
+wtxx = rlimwt[:,0,0,0,chans,0,2]
+wtyy = rlimwt[:,0,0,0,chans,1,2]
+amp_xx=np.sqrt(rlxx**2+imxx**2)
+amp_yy=np.sqrt(rlyy**2+imyy**2)
 
-        deltaphase = 2*math.pi*(u*deltara + v*deltadec)
-        deltaphase = (np.tile(deltaphase, (len(chans), 1))).T
-        phase = np.arctan(im/rl)+deltaphase
-        rlcor = np.cos(phase)*amp
-        rlcor[np.where( rl<0 )] = -1.0*rlcor[np.where( rl<0 )]
-        imcor = np.sin(phase)*amp
-        imcor[np.where( rl<0)] = -1.0*imcor[np.where( rl<0 )]
+deltaphase = 2*math.pi*(u*deltara + v*deltadec)
+deltaphase = (np.tile(deltaphase, (len(chans), 1))).T
+phase_xx = np.arctan(imxx/rlxx)+deltaphase
+phase_yy = np.arctan(imyy/rlyy)+deltaphase
+rlcor_xx = np.cos(phase_xx)*amp_xx
+rlcor_yy = np.cos(phase_yy)*amp_yy
+rlcor_xx[np.where( rlxx<0 )] = -1.0*rlcor_xx[np.where( rlxx<0 )]
+rlcor_yy[np.where( rlyy<0 )] = -1.0*rlcor_yy[np.where( rlyy<0 )]
+imcor_xx = np.cos(phase_xx)*amp_xx
+imcor_yy = np.cos(phase_yy)*amp_yy
+imcor_xx[np.where( imxx<0 )] = -1.0*imcor_xx[np.where( imxx<0 )]
+imcor_yy[np.where( imyy<0 )] = -1.0*imcor_yy[np.where( imyy<0 )]
 
-
-    #Reading in continuum visibilitites//weights and calculating phase shifts
-    if datatype == 'cont':
-        chans = header['NAXIS4']
-        rlxx = rlimwt[:,0,0,0,0,0]
-        rlyy = rlimwt[:,0,0,0,1,0]
-        imxx = rlimwt[:,0,0,0,0,1]
-        imyy = rlimwt[:,0,0,0,1,1]
-        wtxx = rlimwt[:,0,0,0,0,2]
-        wtyy = rlimwt[:,0,0,0,1,2]
-        rl = (rlxx*wtxx+rlyy*wtyy)/(wtxx+wtyy)
-        im = (imxx*wtxx+imyy*wtyy)/(wtxx+wtyy)
-        wt = 4.0/(1.0/wtxx + 1.0/wtyy)
-        amp=np.sqrt(rl**2+im**2)
-
-        deltaphase = 2*math.pi*(u*deltara + v*deltadec)
-        phase = np.arctan(im/rl)+deltaphase
-        rlcor = np.cos(phase)*amp
-        rlcor[np.where( rl<0)] = -1.0*rlcor
-        imcor = np.sin(phase)*amp
-        imcor[np.where( rl<0)] = -1.0*imcor
-    ampcor = np.sqrt(rlcor**2+imcor**2)
+rlcor = np.array((rlcor_xx*wtxx+rlcor_yy*wtyy)/(wtxx+wtyy))
+imcor = np.array((imcor_xx*wtxx+imcor_yy*wtyy)/(wtxx+wtyy))
+wtcor = 4.0/(1.0/wtxx + 1.0/wtyy)
 
 
 #Rotation of (u,v) coordinates back to PA=0 and deprojection
@@ -131,14 +120,14 @@ depdist = (uu**2 + vv**2)**0.5
 #Radial Averaging
 if outputtype in ('rad', 'both'):
     if xlim:
-        if binning == 'lin':
+        if binning is 'lin':
             distrange = np.linspace(np.min(depdist), xlim, bins)
-        if binning == 'log':
+        if binning is 'log':
             distrange = np.logspace(np.log10(np.min(depdist)), np.log10(xlim), bins)
     else:
-        if binning == 'lin':
+        if binning is 'lin':
             distrange = np.linspace(np.min(depdist), np.max(depdist), bins)
-        if binning == 'log':
+        if binning is 'log':
             distrange = np.logspace(np.log10(np.min(depdist)), np.log10(np.max(depdist)), bins)
     rlavg = np.zeros(bins)
     imavg = np.zeros(bins)
@@ -196,14 +185,14 @@ if outputtype in ('rad', 'both'):
         moddepdist = (moduu**2 + modvv**2)**0.5
 
         if xlim:
-            if binning == 'lin':
+            if binning is 'lin':
                 moddistrange = np.linspace(np.min(moddepdist), xlim, bins)
-            if binning == 'log':
+            if binning is 'log':
                 moddistrange = np.logspace(np.log10(np.min(moddepdist)), np.log10(xlim), bins)
         else:
-            if binning == 'lin':
+            if binning is 'lin':
                 moddistrange = np.linspace(np.min(moddepdist), np.max(moddepdist), bins)
-            if binning == 'log':
+            if binning is 'log':
                 moddistrange = np.logspace(np.log10(np.min(moddepdist)), np.log10(np.max(moddepdist)), bins)
         modrlavg = np.zeros(bins)
         modimavg = np.zeros(bins)
@@ -245,11 +234,23 @@ if outputtype in ('im', 'both'):
     call('rm -rf '+image+'.*', shell=True)
     dfits.writeto(''+image+'.uvf')
     call('fits in='+image+'.uvf op=uvin out='+image+'.vis', shell=True)
-    if datatype == 'cont':
+    if datatype is 'cont':
         call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 options=systemp,mfs robust=2', shell=True)
-    if datatype == 'line':
-        call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 '+imchans+' robust=2', shell=True)
+    if datatype is 'line':
+        if momchans is 'channel':
+            call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 '+imchans+' robust=2', shell=True)
+        if momchans is 'moment':
+            call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 robust=2', shell=True)
     call('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl niters=300', shell=True)
     call('restor map='+image+'.mp beam='+image+'.bm model='+image+'.cl out='+image+'.cm', shell=True)
-    call('cgdisp in='+image+'.cm '+chandims+' device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
+    if datatype is 'cont':
+        call('cgdisp in='+image+'.cm device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
+    if datatype is 'line':
+        if momchans is 'moment':
+            call('moment in='+image+'.cm mom=0 out='+image+'.m0', shell=True)
+            call('cgdisp in='+image+'.m0 device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
+        else:  
+            call('cgdisp in='+image+'.cm '+chandims+' device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
+
+    
 

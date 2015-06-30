@@ -6,6 +6,7 @@
 *.mp/
 *.im/
 *.vis
+*.m0
 *.png
 *.fits
 .*.swp
