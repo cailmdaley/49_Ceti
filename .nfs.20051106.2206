@@ -57,7 +57,7 @@ xlim = 300
 datatype= 'line'
 imchans = 'line=channel,'+'23,1,1,1'
 chandims = 'nxy=6,3'
-chans = range(1,23)
+chans = range(0,23)
 momchans = 'channel'    
 
 
@@ -65,6 +65,12 @@ momchans = 'channel'
 dfits = fits.open(fileinp)
 data = dfits[0].data
 rlimwt = dfits[0].data['data']
+if datatype is 'cont':
+    chans = range(header['NAXIS4'])
+if datatype is 'line':
+    if momchans is 'moment':
+        chans = range(header['NAXIS4'])
+rlimwt = rlimwt[:,:,:,:,chans,:,:]
 header = dfits[0].header
 freq = header['CRVAL4']
 u = data['UU']
@@ -73,17 +79,12 @@ visnum=len(u)
 
 
 #Reading in visibilitites//weights and calculating phase shifts
-if datatype is 'cont':
-    chans = range(header['NAXIS4'])
-if datatype is 'line':
-    if momchans is 'moment':
-        chans = range(header['NAXIS4'])
-rlxx = rlimwt[:,0,0,0,chans,0,0]
-rlyy = rlimwt[:,0,0,0,chans,1,0]
-imxx = rlimwt[:,0,0,0,chans,0,1]
-imyy = rlimwt[:,0,0,0,chans,1,1]
-wtxx = rlimwt[:,0,0,0,chans,0,2]
-wtyy = rlimwt[:,0,0,0,chans,1,2]
+rlxx = rlimwt[:,0,0,0,:,0,0]
+rlyy = rlimwt[:,0,0,0,:,1,0]
+imxx = rlimwt[:,0,0,0,:,0,1]
+imyy = rlimwt[:,0,0,0,:,1,1]
+wtxx = rlimwt[:,0,0,0,:,0,2]
+wtyy = rlimwt[:,0,0,0,:,1,2]
 amp_xx=np.sqrt(rlxx**2+imxx**2)
 amp_yy=np.sqrt(rlyy**2+imyy**2)
 
@@ -231,6 +232,13 @@ if outputtype in ('rad', 'both'):
 if outputtype in ('im', 'both'):
     data['UU'] = u2
     data['VV'] = v2
+    rlimwt[:,0,0,0,:,0,0] = rlcor_xx
+    rlimwt[:,0,0,0,:,1,0] = rlcor_yy
+    rlimwt[:,0,0,0,:,0,1] = imcor_xx
+    rlimwt[:,0,0,0,:,1,1] = imcor_yy
+    header['NAXIS4'] = len(chans)
+    dfits[0].data['data'] = rlimwt
+
     call('rm -rf '+image+'.*', shell=True)
     dfits.writeto(''+image+'.uvf')
     call('fits in='+image+'.uvf op=uvin out='+image+'.vis', shell=True)
@@ -238,7 +246,7 @@ if outputtype in ('im', 'both'):
         call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 options=systemp,mfs robust=2', shell=True)
     if datatype is 'line':
         if momchans is 'channel':
-            call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 '+imchans+' robust=2', shell=True)
+            call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 robust=2', shell=True)
         if momchans is 'moment':
             call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 robust=2', shell=True)
     call('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl niters=300', shell=True)
