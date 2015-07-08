@@ -98,6 +98,8 @@ if datatype == 'line':
 amp_xx=np.sqrt(rlxx**2+imxx**2)
 amp_yy=np.sqrt(rlyy**2+imyy**2)
 freq = header['CRVAL4']
+dfreq= header['CDELT4']
+chanwidth = 2.99792458e05*-1.0*dfreq/freq
 u = data['UU']
 v = data['VV']
 visnum=len(u)
@@ -117,8 +119,8 @@ imcor_yy = np.cos(phase_yy)*amp_yy
 imcor_xx[np.where( imxx<0 )] = -1.0*imcor_xx[np.where( imxx<0 )]
 imcor_yy[np.where( imyy<0 )] = -1.0*imcor_yy[np.where( imyy<0 )]
 
-rlcor = np.array((rlcor_xx*wtxx+rlcor_yy*wtyy)/(wtxx+wtyy))
-imcor = np.array((imcor_xx*wtxx+imcor_yy*wtyy)/(wtxx+wtyy))
+rlcor = np.array(0.25*(1.0/wtxx + 1.0/wtyy)*(rlcor_xx*wtxx + rlcor_yy*wtyy))
+imcor = np.array(0.25*(1.0/wtxx + 1.0/wtyy)*(imcor_xx*wtxx + imcor_yy*wtyy))
 wtcor = 4.0/(1.0/wtxx + 1.0/wtyy)
 
 
@@ -137,9 +139,12 @@ depdist = (uu**2 + vv**2)**0.5
 if outputtype == 'rad':
     if datatype == 'line':
         for i in range(visnum):
-            rlcor[i] = np.sum(rlcor[i,:])
-            imcor[i] = np.sum(imcor[i,:])
-            wtcor[i] = np.sum(wtcor[i,:])
+            rlcor[i] = np.sum(rlcor[i,:])*chanwidth
+            imcor[i] = np.sum(imcor[i,:])*chanwidth
+            wtcor[i] = np.sum(wtcor[i,:])*chanwidth
+        rlcor = np.delete(rlcor, np.s_[1:], 1)
+        imcor = np.delete(imcor, np.s_[1:], 1)
+        wtcor = np.delete(wtcor, np.s_[1:], 1)
     if xlim:
         if binning == 'lin':
             distrange = np.linspace(np.min(depdist), xlim, bins)
@@ -257,6 +262,17 @@ if outputtype == 'rad':
 if outputtype == 'im':
     data['UU'] = u2
     data['VV'] = v2
+    if datatype == 'cont':
+        rlimwt[:,0,0,0,0,0]=np.ravel(rlcor_xx)
+        rlimwt[:,0,0,0,1,0]=np.ravel(rlcor_yy)
+        rlimwt[:,0,0,0,0,1]=np.ravel(imcor_xx)
+        rlimwt[:,0,0,0,1,1]=np.ravel(imcor_yy)
+    if datatype == 'line':
+        rlimwt[:,0,0,0,:,0,0]=rlcor_xx
+        rlimwt[:,0,0,0,:,1,0]=rlcor_yy
+        rlimwt[:,0,0,0,:,0,1]=imcor_xx
+        rlimwt[:,0,0,0,:,1,1]=imcor_yy
+    dfits[0].data['data']=rlimwt
 
     call('rm -rf '+image+'.*', shell=True)
     dfits.writeto(''+image+'.uvf')
