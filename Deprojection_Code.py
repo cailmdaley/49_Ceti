@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from astropy.io import fits
 import math
 import pyfits
@@ -10,30 +11,31 @@ plt.close()
 #INPUT VARIABLES
 print "This code will read in a FITS file and deproject its visibilities. It can handle line emission and continuum data, and can radially average continuum to create a plot of flux as a function of radially deprojected distance. It can also image the disk to create either a single continuum image, a zeroth moment map, or channel maps."
 print
-fileinp = raw_input('Please enter the filename: ')
+fileinp = 'ceti250ch.uvf' #raw_input('Please enter the filename: ')
 print
 print "If there is an offset between the center of the source and the center of the image, please enter the shift required to center the source. (if the source center is at (-1.0,-1.0) you would enter (1.0,1.0)"
 print
-deltara = math.radians( input('RA shift in arcsecs: ')/3600.0)
-deltadec = math.radians( input('Dec shift in arcsecs: ')/3600.0) 
+deltara = 0.0 #math.radians( input('RA shift in arcsecs: ')/3600.0)
+deltadec = 0.0 #math.radians( input('Dec shift in arcsecs: ')/3600.0) 
 print
-pa = math.radians( input('Please enter the SKY PA in degrees: '))
-inc = math.radians( input('Please enter the inclination of the disk in degrees: '))
+pa = math.radians(108.5) #math.radians( input('Please enter the SKY PA in degrees: '))
+inc = math.radians(79.1) #math.radians( input('Please enter the inclination of the disk in degrees: '))
 print
-outputtype = raw_input('Please enter \'rad\' for radial averaging or \'im\' for imaging: ')
+outputtype = 'im' #raw_input('Please enter \'rad\' for radial averaging or \'im\' for imaging: ')
 if outputtype == 'im':
    image = raw_input('Please enter the filename you would like your image(s) to have, not including the filetype: ')
 if outputtype == 'rad':
-    bins = input('Please enter the number of bins you would like: ')
-    binning = raw_input('Please enter \'log\' for logarithmic binning or \'lin\' for linear binning: ')
+    bins = 15 #input('Please enter the number of bins you would like: ')
+    binning = 'lin' #raw_input('Please enter \'log\' for logarithmic binning or \'lin\' for linear binning: ')
     print
     try:
-       xlim = input('If you would like to set a value for the maximum distance plotted, please enter it in $k\lambda$ here. Otherwise, press return: ')
+       xmax = 160  #input('If you would like to set a value for the maximum distance plotted, please enter it in $k\lambda$ here. Otherwise, press return: ')
+
     except SyntaxError:
-       xlim = None
+       xmax = None
     try:
         print
-        savefig = raw_input('If you would like to save the radially averaged plot, please enter the filename (including extension) that you would like it to have. Otherwise, press return: ')
+        savefig = '49Ceti_dep_cont_rad' #raw_input('If you would like to save the radially averaged plot, please enter the filename (excluding extension) that you would like it to have. Otherwise, press return: ')
     except SyntaxError:
         savefig = None
 dfits = fits.open(fileinp)
@@ -55,27 +57,9 @@ if datatype == 'line':
 if outputtype == 'rad':
     try:   
         print
-        model = raw_input('If you would like to compare with a model, please include its filename here. Otherwise, press return: ')
+        model = None  #raw_input('If you would like to compare with a model, please include its filename here. Otherwise, press return: ')
     except SyntaxError:
        model = None
-#fileinp='ceti250ch.uvf'
-#outputtype='rad'
-#bins=15
-#binning='log'
-#spa=108.5
-#pa=math.radians(spa)
-#inc=math.radians(79.1)
-#model='vf'
-#image='49cetichannelmap'
-#deltara=0
-#deltadec=0
-#xlim = 300
-#datatype= 'line'
-#chansin = 'line=channel,'+'23,1,1,1'
-#chandims = 'nxy=6,3'
-#chans = range(0,2)
-#momchans = 'aaaaaa'    
-
 
 #Reading in fits file/image (assuming ALMA data)
 data = dfits[0].data
@@ -145,11 +129,11 @@ if outputtype == 'rad':
         rlcor = np.delete(rlcor, np.s_[1:], 1)
         imcor = np.delete(imcor, np.s_[1:], 1)
         wtcor = np.delete(wtcor, np.s_[1:], 1)
-    if xlim:
+    if xmax:
         if binning == 'lin':
-            distrange = np.linspace(np.min(depdist), xlim, bins)
+            distrange = np.linspace(np.min(depdist), xmax, bins)
         elif binning == 'log':
-            distrange = np.logspace(np.log10(np.min(depdist)), np.log10(xlim), bins)
+            distrange = np.logspace(np.log10(np.min(depdist)), np.log10(xmax), bins)
     else:
         if binning == 'lin':   
             distrange = np.linspace(np.min(depdist), np.max(depdist), bins)
@@ -186,7 +170,7 @@ if outputtype == 'rad':
 
 
 #Model
-    if len(model)>4:
+    if model:
         modfits = fits.open(model)
         moddata = modfits[0].data
         modrlimwt = modfits[0].data['data']
@@ -212,11 +196,11 @@ if outputtype == 'rad':
         modvv = modv2*modfreq*1e-03
         moddepdist = (moduu**2 + modvv**2)**0.5
 
-        if xlim:
+        if xmax:
             if binning == 'lin':
-                moddistrange = np.linspace(np.min(moddepdist), xlim, bins)
+                moddistrange = np.linspace(np.min(moddepdist), xmax, bins)
             elif binning == 'log':
-                moddistrange = np.logspace(np.log10(np.min(moddepdist)), np.log10(xlim), bins)
+                moddistrange = np.logspace(np.log10(np.min(moddepdist)), np.log10(xmax), bins)
         else:
             if binning == 'lin':
                 moddistrange = np.linspace(np.min(moddepdist), np.max(moddepdist), bins)
@@ -235,26 +219,53 @@ if outputtype == 'rad':
 
 
 #Plotting
-    plt.subplot(211)
-    plt.errorbar( distrange, rlavg*1e03, yerr=rlSEM*1e03, marker='.', fmt=' ' )
-    plt.axhline()
-    if len(model)>4:
-        plt.plot(moddistrange, modrlavg*1e03) 
-    plt.title('Flux as a Function of Deprojected Distance')
-    plt.title('Real Flux as a Function of Deprojected Distance')
-    plt.xlabel('$k\lambda$')
-    plt.ylabel('mJy')
+if outputtype == 'rad':
+    rlabs = np.absolute(rlavg)
+    rlSEMabs = np.absolute(rlSEM)
+    imabs = np.absolute(imavg)
+    imSEMabs = np.absolute(imSEM)
+    if datatype == 'cont':
+        rlrange = np.ceil((max(rlavg) + rlSEM[np.where(rlavg==max(rlavg))])*1e03) - np.floor((min(rlavg) - rlSEM[np.where(rlavg==min(rlavg))])*1e03)
+        imrange = np.ceil((max(imavg) + imSEM[np.where(imavg==max(imavg))])*1e03) - np.floor((min(imavg) - imSEM[np.where(imavg==min(imavg))])*1e03)
+    else:
+        rlrange = np.ceil(max(rlavg) + rlSEM[np.where(rlavg==max(rlavg))]) - np.floor(min(rlavg) - rlSEM[np.where(rlavg==min(rlavg))])
+        imrange = np.ceil(max(imavg) + imSEM[np.where(imavg==max(imavg))]) - np.floor(min(imavg) - imSEM[np.where(imavg==min(imavg))])
+    gs = gridspec.GridSpec(2, 1, height_ratios=[rlrange,imrange])
+    plt.subplot(gs[0])
+    if datatype == 'cont':
+        plt.errorbar( distrange, rlavg*1e03, yerr=rlSEM*1e03, marker='.', fmt=' ' )
+    else:
+        plt.errorbar( distrange, rlavg, yerr=rlSEM, marker='.', fmt=' ' )
+    plt.xlim(0, xmax)
+    plt.axhline(c='k', ls='--', linewidth=2)
+    plt.xticks(np.arange(0, max(distrange)+20, 20))
+    if model:
+        plt.plot(moddistrange, modrlavg*1e03, linewidth=2)
+    if datatype == 'cont':
+        plt.ylabel('Re (mJy)', fontsize=15)
+    else: 
+        plt.ylabel('Re (Jy$\mathcal{*}$km/s)', fontsize=15)
+        
 
-    plt.subplot(212)
-    plt.errorbar( distrange, imavg*1e03, yerr=imSEM*1e03, marker='.', fmt=' ' )
-    plt.axhline()
-    if len(model)>4:
-        plt.plot(moddistrange, modimavg*1e03) 
-    plt.title('Imaginary Flux as a Function of Deprojected Distance')
-    plt.xlabel('$k\lambda$')
-    plt.ylabel('mJy')
+    plt.subplot(gs[1])
+    if datatype == 'cont':
+        plt.errorbar( distrange, imavg*1e03, yerr=imSEM*1e03, marker='.', fmt=' ' )
+    else:
+        plt.errorbar( distrange, imavg, yerr=imSEM, marker='.', fmt=' ' )
+    plt.xlim(0, xmax)
+    plt.axhline(c='k', ls='--', linewidth=2)
+    plt.xticks(np.arange(0, max(distrange)+20, 20))
+    if datatype == 'cont':
+        plt.yticks(np.linspace(np.floor((min(imavg) - imSEM[np.where(imavg==min(imavg))])*1e03), np.ceil((max(imavg) + imSEM[np.where(imavg==max(imavg))])*1e03), 3))
+    else:
+        plt.yticks(np.linspace(np.floor((min(imavg) - imSEM[np.where(imavg==min(imavg))])), np.ceil((max(imavg) + imSEM[np.where(imavg==max(imavg))])), 3))
+    plt.xlabel(r'$\mathcal{R}_{uv}$ ($k\lambda$)', fontsize=15, labelpad=10)
+    if datatype == 'cont':
+        plt.ylabel('Im (mJy)', fontsize=15)
+    else:
+        plt.ylabel(r'Im (Jy$\mathcal{*}$km/s)', fontsize=15)
     if savefig:
-        plt.savefig(''+savefig+'')
+        plt.savefig(''+savefig+'.eps')
     plt.show()
 
 
@@ -278,10 +289,10 @@ if outputtype == 'im':
     dfits.writeto(''+image+'.uvf')
     call('fits in='+image+'.uvf op=uvin out='+image+'.vis', shell=True)
     if datatype == 'cont':
-        call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 options=systemp,mfs robust=2', shell=True)
+        call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.009765625 imsize=1024 options=systemp,mfs robust=2', shell=True)
     elif datatype == 'line':
-            call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.3 imsize=256 robust=2', shell=True)
-    call('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl niters=500', shell=True)
+            call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.009765625 imsize=1024 robust=2', shell=True)
+    call('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl niters=300', shell=True)    
     call('restor map='+image+'.mp beam='+image+'.bm model='+image+'.cl out='+image+'.cm', shell=True)
     if datatype == 'cont':
         call('cgdisp in='+image+'.cm device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
