@@ -1,4 +1,3 @@
-from color_scale import *
 from matplotlib.ticker import AutoMinorLocator,LinearLocator,NullLocator
 import matplotlib.gridspec as gridspec
 import math
@@ -11,7 +10,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.patheffects as PathEffects
 
 #.fits inputs
-dat = ['vis/imagefun/49Cet_rob2_1024_cell009765625.fits','vis/imagefun/49Cet_rob2_1024_cell009765625_taper.75arcsec.fits']
+dat = ['49Ceti_.75arcsectaper.fits','49Ceti_robust2.fits']
 
 #make the colormap
 def make_cmap(colors, position=None, bit=False):
@@ -94,7 +93,7 @@ def plotcmd(dat,ax,levs1):
 	colbar.set_ticks([])
 	colbar.set_ticklabels([])
 	colbar.ax.set_xticklabels('',visible=False)
-	if i == 1: 
+	if i == 1:
 		ax.text(705,967,'0.75" gaussian',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
 		ax.text(825,920,'taper',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
 	if ax.is_first_col():
@@ -111,7 +110,7 @@ def plotcmd(dat,ax,levs1):
 		ax.add_line(line)
 		line = pylab.Line2D((615,615),(95,105),lw=1,color='k')
 		ax.add_line(line)
-		line = pylab.Line2D((785.666,785.666),(95,105),lw=1,color='k') 
+		line = pylab.Line2D((785.666,785.666),(95,105),lw=1,color='k')
 		ax.add_line(line)
 		ax.text(800,967,'robust=2',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
 		ax.text(627,115,'100 AU',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
@@ -120,7 +119,7 @@ def plotcmd(dat,ax,levs1):
 		ax.text(444,1053,r'$\mu Jy / bm$',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
 
 
-for i in range(2):	
+for i in range(2):
 	if i == 0:
 		levels = np.array([j*5.55e-5 for j in range(2,40,2)])
 	if i == 1:

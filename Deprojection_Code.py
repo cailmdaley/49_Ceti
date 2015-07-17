@@ -1,41 +1,43 @@
+from astropy.io import fits
+import os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-from astropy.io import fits
-import math
 import pyfits
-from subprocess import call
-import os
+import pylab
 plt.close()
 
 #INPUT VARIABLES
 print "This code will read in a FITS file and deproject its visibilities. It can handle line emission and continuum data, and can radially average continuum to create a plot of flux as a function of radially deprojected distance. It can also image the disk to create either a single continuum image, a zeroth moment map, or channel maps."
 print
-fileinp = 'ceti250ch.uvf' #raw_input('Please enter the filename: ')
+fileinp = raw_input('Please enter the filename: ')
 print
 print "If there is an offset between the center of the source and the center of the image, please enter the shift required to center the source. (if the source center is at (-1.0,-1.0) you would enter (1.0,1.0)"
 print
-deltara = 0.0 #math.radians( input('RA shift in arcsecs: ')/3600.0)
-deltadec = 0.0 #math.radians( input('Dec shift in arcsecs: ')/3600.0) 
+deltara = math.radians( input('RA shift in arcsecs: ')/3600.0)
+deltadec = math.radians( input('Dec shift in arcsecs: ')/3600.0)
 print
-pa = math.radians(108.5) #math.radians( input('Please enter the SKY PA in degrees: '))
-inc = math.radians(79.1) #math.radians( input('Please enter the inclination of the disk in degrees: '))
+pa = math.radians( input('Please enter the SKY PA in degrees: '))
+inc = math.radians( input('Please enter the inclination of the disk in degrees: '))
 print
-outputtype = 'im' #raw_input('Please enter \'rad\' for radial averaging or \'im\' for imaging: ')
+outputtype = raw_input('Please enter \'rad\' for radial averaging or \'im\' for imaging: ')
 if outputtype == 'im':
    image = raw_input('Please enter the filename you would like your image(s) to have, not including the filetype: ')
+   imsize = input('Please how many arcseconds across you would like your image to be: ')
+   pixsize = str(imsize/1024.0)
+   cutoff = raw_input('Please enter the flux level at which you would like to stop cleaning, in Jy: ')
 if outputtype == 'rad':
-    bins = 15 #input('Please enter the number of bins you would like: ')
-    binning = 'lin' #raw_input('Please enter \'log\' for logarithmic binning or \'lin\' for linear binning: ')
+    bins = input('Please enter the number of bins you would like: ')
+    binning = raw_input('Please enter \'log\' for logarithmic binning or \'lin\' for linear binning: ')
     print
     try:
-       xmax = 160  #input('If you would like to set a value for the maximum distance plotted, please enter it in $k\lambda$ here. Otherwise, press return: ')
+       xmax = input('If you would like to set a value for the maximum distance plotted, please enter it in $k\lambda$ here. Otherwise, press return: ')
 
     except SyntaxError:
        xmax = None
     try:
         print
-        savefig = '49Ceti_dep_cont_rad' #raw_input('If you would like to save the radially averaged plot, please enter the filename (excluding extension) that you would like it to have. Otherwise, press return: ')
+        savefig = raw_input('If you would like to save the radially averaged plot, please enter the filename (excluding extension) that you would like it to have. Otherwise, press return: ')
     except SyntaxError:
         savefig = None
 dfits = fits.open(fileinp)
@@ -50,12 +52,11 @@ if datatype == 'line':
     else:
         print
         momchans = raw_input('Please enter \'moment\' if you would like to create a moment map, or \'channel\' if you would like to create channel maps: ')
-        print
-    if momchans == 'channel':
-        print
-        chandims = 'nxy=' + raw_input('Please enter the dimensions of the channel maps to be shown on each page, in the form \'columns,rows\': ')
+        if momchans == 'line':
+            imchans = 'line=channel,' + raw_input ( 'Please enter the channels you would like to image in standard line MIRIAD format,  \'number of channels,starting channel index,channel width,step size.\' Indexing starts at 1: ')
+            chandims = 'nxy=' + raw_input('Please enter the dimensions of the displayed channel maps in the form of \'x,y\': ')
 if outputtype == 'rad':
-    try:   
+    try:
         print
         model = None  #raw_input('If you would like to compare with a model, please include its filename here. Otherwise, press return: ')
     except SyntaxError:
@@ -111,7 +112,7 @@ wtcor = 4.0/(1.0/wtxx + 1.0/wtyy)
 #Rotation of (u,v) coordinates back to PA=0 and deprojection
 u1 = (u*np.cos(pa)-v*np.sin(pa))*np.cos(inc)
 v1 = (u*np.sin(pa)+v*np.cos(pa))
-#Rotation of (u,v) coordinates back to sky PA 
+#Rotation of (u,v) coordinates back to sky PA
 u2 = u1*np.cos(-1.0*pa)-v1*np.sin(-1.0*pa)
 v2 = u1*np.sin(-1.0*pa)+v1*np.cos(-1.0*pa)
 uu = u2*freq*1e-03
@@ -135,7 +136,7 @@ if outputtype == 'rad':
         elif binning == 'log':
             distrange = np.logspace(np.log10(np.min(depdist)), np.log10(xmax), bins)
     else:
-        if binning == 'lin':   
+        if binning == 'lin':
             distrange = np.linspace(np.min(depdist), np.max(depdist), bins)
         elif binning == 'log':
             distrange = np.logspace(np.log10(np.min(depdist)), np.log10(np.max(depdist)), bins)
@@ -157,7 +158,7 @@ if outputtype == 'rad':
     imsamplestandev = np.zeros(bins)
     N = np.zeros(bins)
     for i in range(bins):
-        if i<np.max(range(bins)):  
+        if i<np.max(range(bins)):
             rlsamplestandev[i] = np.std(rlcor[np.where( (depdist>=distrange[i]) & (depdist<=distrange[i+1]) )], ddof=1)
             imsamplestandev[i] = np.std(imcor[np.where( (depdist>=distrange[i]) & (depdist<=distrange[i+1]) )], ddof=1)
             N[i]=np.size(np.where( (depdist>=distrange[i]) & (depdist<=distrange[i+1]) ))
@@ -166,7 +167,7 @@ if outputtype == 'rad':
             imsamplestandev[i] = np.std(imcor[np.where( (depdist>=distrange[i]) & (depdist<=np.max(distrange)) )], ddof=1)
             N[i]=np.size(np.where( (depdist>=distrange[i]) & (depdist<=np.max(distrange)) ))
     rlSEM=rlsamplestandev/np.sqrt(N)
-    imSEM=imsamplestandev/np.sqrt(N)    
+    imSEM=imsamplestandev/np.sqrt(N)
 
 
 #Model
@@ -243,9 +244,9 @@ if outputtype == 'rad':
         plt.plot(moddistrange, modrlavg*1e03, linewidth=2)
     if datatype == 'cont':
         plt.ylabel('Re (mJy)', fontsize=15)
-    else: 
+    else:
         plt.ylabel('Re (Jy$\mathcal{*}$km/s)', fontsize=15)
-        
+
 
     plt.subplot(gs[1])
     if datatype == 'cont':
@@ -269,7 +270,7 @@ if outputtype == 'rad':
     plt.show()
 
 
-#Creating visibility fits file
+#Reading data back into fits file, cleaning in MIRIAD, converting back to fits file
 if outputtype == 'im':
     data['UU'] = u2
     data['VV'] = v2
@@ -285,23 +286,24 @@ if outputtype == 'im':
         rlimwt[:,0,0,0,:,1,1]=imcor_yy
     dfits[0].data['data']=rlimwt
 
-    call('rm -rf '+image+'.*', shell=True)
+    os.system('rm -rf '+image+'.*')
     dfits.writeto(''+image+'.uvf')
-    call('fits in='+image+'.uvf op=uvin out='+image+'.vis', shell=True)
+    os.system('fits in='+image+'.uvf op=uvin out='+image+'.vis')
     if datatype == 'cont':
-        call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.009765625 imsize=1024 options=systemp,mfs robust=2', shell=True)
-    elif datatype == 'line':
-            call('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell=0.009765625 imsize=1024 robust=2', shell=True)
-    call('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl niters=300', shell=True)    
-    call('restor map='+image+'.mp beam='+image+'.bm model='+image+'.cl out='+image+'.cm', shell=True)
-    if datatype == 'cont':
-        call('cgdisp in='+image+'.cm device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
+        os.system('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell='+pixsize+' imsize=1024 options=systemp,mfs robust=2')
     elif datatype == 'line':
         if momchans == 'moment':
-            call('moment in='+image+'.cm mom=0 out='+image+'.m0', shell=True)
-            call('cgdisp in='+image+'.m0 device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
-        else:  
-            call('cgdisp in='+image+'.cm '+chandims+' device=/xs labtyp=arcsec beamtyp=b,l,4', shell=True)
-
-    
+            os.system('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell='+pixsize+' imsize=1024 robust=2')
+        elif mochans == 'line':
+            os.system('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell='+pixsize+' '+imchans+' imsize=1024 robust=2')
+    os.system('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl cutoff='+cutoff+' niters=10000')
+    os.system('restor map='+image+'.mp beam='+image+'.bm model='+image+'.cl out='+image+'.cm')
+    if datatype == 'cont':
+            os.system('cgdisp in='+image+'.cm device=/xs labtyp=arcsec beamtyp=b,l,4')
+    elif datatype == 'line':
+        if momchans == 'moment':
+            os.system('moment in='+image+'.cm mom=0 out='+image+'.m0')
+            os.system('cgdisp in='+image+'.m0 device=/xs labtyp=arcsec beamtyp=b,l,4')
+        else:
+            os.system('cgdisp in='+image+'.cm '+chandims+' device=/xs labtyp=arcsec beamtyp=b,l,4')
 
