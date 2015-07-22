@@ -7,10 +7,16 @@ import pyfits
 import pylab
 plt.close()
 
-#INPUT VARIABLES
+#INPUT VARIABLES//Opening fits file
 print "This code will read in a FITS file and deproject its visibilities. It can handle line emission and continuum data, and can radially average continuum to create a plot of flux as a function of radially deprojected distance. It can also image the disk to create either a single continuum image, a zeroth moment map, or channel maps."
 print
 fileinp = raw_input('Please enter the filename: ')
+dfits = fits.open(fileinp)
+header = dfits[0].header
+if header['NAXIS4'] == 1:
+    datatype = 'cont'
+else:
+    datatype = 'line'
 print
 print "If there is an offset between the center of the source and the center of the image, please enter the shift required to center the source. (if the source center is at (-1.0,-1.0) you would enter (1.0,1.0)"
 print
@@ -22,10 +28,11 @@ inc = math.radians( input('Please enter the inclination of the disk in degrees: 
 print
 outputtype = raw_input('Please enter \'rad\' for radial averaging or \'im\' for imaging: ')
 if outputtype == 'im':
-   image = raw_input('Please enter the filename you would like your image(s) to have, not including the filetype: ')
-   imsize = input('Please how many arcseconds across you would like your image to be: ')
-   pixsize = str(imsize/1024.0)
-   cutoff = raw_input('Please enter the flux level at which you would like to stop cleaning, in Jy: ')
+    image = raw_input('Please enter the filename you would like your image(s) to have, not including the filetype: ')
+    imsize = input('Please how many arcseconds across you would like your image to be: ')
+    pixsize = str(imsize/1024.0)
+    if datatype =='cont':
+        cutoff = raw_input('Please enter the flux level at which you would like to stop cleaning, in Jy: ')
 if outputtype == 'rad':
     bins = input('Please enter the number of bins you would like: ')
     binning = raw_input('Please enter \'log\' for logarithmic binning or \'lin\' for linear binning: ')
@@ -40,12 +47,6 @@ if outputtype == 'rad':
         savefig = raw_input('If you would like to save the radially averaged plot, please enter the filename (excluding extension) that you would like it to have. Otherwise, press return: ')
     except SyntaxError:
         savefig = None
-dfits = fits.open(fileinp)
-header = dfits[0].header
-if header['NAXIS4'] == 1:
-    datatype = 'cont'
-else:
-    datatype = 'line'
 if datatype == 'line':
     if outputtype == 'rad':
         momchans = 'moment'
@@ -294,9 +295,12 @@ if outputtype == 'im':
     elif datatype == 'line':
         if momchans == 'moment':
             os.system('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell='+pixsize+' imsize=1024 robust=2')
-        elif mochans == 'line':
+        elif momchans == 'line':
             os.system('invert vis='+image+'.vis map='+image+'.mp beam='+image+'.bm cell='+pixsize+' '+imchans+' imsize=1024 robust=2')
-    os.system('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl cutoff='+cutoff+' niters=10000')
+    if datatype == 'cont':
+        os.system('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl cutoff='+cutoff+' niters=10000')
+    elif datatype == 'line':
+        os.system('clean map='+image+'.mp beam='+image+'.bm out='+image+'.cl niters=100')
     os.system('restor map='+image+'.mp beam='+image+'.bm model='+image+'.cl out='+image+'.cm')
     if datatype == 'cont':
             os.system('cgdisp in='+image+'.cm device=/xs labtyp=arcsec beamtyp=b,l,4')
