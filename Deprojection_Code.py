@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pyfits
 import pylab
+import matplotlib.gridspec as gridspec
 plt.close()
 
 #INPUT VARIABLES//Opening fits file
