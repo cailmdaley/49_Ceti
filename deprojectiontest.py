@@ -7,17 +7,17 @@ from pylab import *
 import math
 plt.close()
 
-outer=100.0
-inner=outer/2.5
-pa=np.radians(-71.5)
+outer=300.0
+inner=50.0
+pa=np.radians(108.5)
 inc=np.radians(79.1)
 ratio=np.cos(inc)
-major=100.0
+major=150.0
 minor=major*ratio
 flux=6.0
 dd=5.0 #disk diameter of 49 Ceti in degrees
 
-imsize=301
+imsize=701
 gauss=np.zeros([imsize, imsize])
 d=np.zeros([imsize, imsize])
 xs=np.arange(imsize)-imsize/2.0
@@ -35,7 +35,7 @@ gauss[np.where((d<=inner) | (d>=outer))]=0
 e=gauss/np.sum(gauss)*0.017
 
 plt.imshow(e, origin='lower')
-plt.savefig('virtual.pdf')
+# plt.savefig('virtual.pdf')
 plt.show()
 
 
@@ -59,8 +59,8 @@ hdu.header['CDELT2']=dd/(2.0*outer*3600.0)
 hdu.header['CRPIX1']=(imsize+1)/2.0
 hdu.header['CRPIX2']=(imsize+1)/2.0
 hdu.header['EPOCH']=2000.0
-hdu.writeto('49cetimodel.fits')
-call("fits in=49cetimodel.fits op=xyin out=49cetimodel.im", shell=True)
-call("uvmodel model=49cetimodel.im vis=49ceti.vis options=replace out=49cetimodel.vis", shell=True)
-call("fits in=49cetimodel.vis op=uvout out=49cetimodel.uvf", shell=True)
+hdu.writeto('cetimodel.fits')
+call("fits in=cetimodel.fits op=xyin out=cetimodel.im", shell=True)
+call("uvmodel model=cetimodel.im vis=49ceti.vis options=replace out=cetimodel.vis", shell=True)
+call("fits in=cetimodel.vis op=uvout out=cetimodel.uvf", shell=True)
 

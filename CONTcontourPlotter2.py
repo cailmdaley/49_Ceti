@@ -69,53 +69,51 @@ def plotcmd(dat,ax,levs1):
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     #describe the beams for each image
+    beam = Ellipse(xy=(80,70),height=.54/.009765625,width=0.43/.009765625,angle=-8.49e1,facecolor='none',edgecolor='k',hatch='//')
+    ax.add_patch(beam)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("top", size="8%", pad=0.0)
+    colbar = fig.colorbar(col,cax=cax,orientation='horizontal')
+    axT = colbar.ax.twiny()
+    print np.min(contimgGood)
+    print np.max(contimgGood)
+    axT.set_xlim(np.min(contimgGood),np.max(contimgGood))
+    #set x colbar ticks and labels
     if i == 0:
-        beam = Ellipse(xy=(150,150),height=2.50473/.009765625,width=2.15753/.009765625,angle=57.9054,facecolor='none',edgecolor='k',hatch='//')
-	if i == 1:
-		beam = Ellipse(xy=(90,80),height=.91/.009765625,width=0.77/.009765625,angle=80.1,facecolor='none',edgecolor='k',hatch='//')
-	ax.add_patch(beam)
-	divider = make_axes_locatable(ax)
-	cax = divider.append_axes("top", size="8%", pad=0.0)
-	colbar = fig.colorbar(col,cax=cax,orientation='horizontal')
-	axT = colbar.ax.twiny()
-	print np.min(contimgGood)
-	print np.max(contimgGood)
-	axT.set_xlim(np.min(contimgGood),np.max(contimgGood))
-	#set x colbar ticks and labels
-	if i == 0:
-		axT.set_xticks(np.arange(-0.0002,.0014001,0.0002))
-		axT.set_xticklabels(range(-200,1401,200),fontsize=7,rotation=30)
-		axT.tick_params(axis='both',which='major',pad=1)
-	if i == 1:
-		axT.set_xticks(np.arange(-.0002,0.0014001,0.0002))
-		axT.set_xticklabels(range(-200,1401,200),fontsize=7,rotation=30)
-		axT.tick_params(axis='both',which='major',pad=1)
-	axT.set_yticks([])
-	axT.set_yticklabels('',visible=False)
-	colbar.set_ticks([])
-	colbar.set_ticklabels([])
-	colbar.ax.set_xticklabels('',visible=False)
-	if ax.is_first_col():
-		ax.set_xlabel(r'$\Delta \alpha$ (")',fontsize=10,labelpad=1)
-		ax.set_ylabel(r'$\Delta \delta$ (")',fontsize=10,labelpad=1)
-		x = ['','-6','','','-3','','','0','','','3','','','6','']
-		ax.set_xticklabels(x)
-		ax.set_yticklabels(x)
-		for tick in ax.xaxis.get_major_ticks():
-			tick.label.set_fontsize(8)
-		for tick in ax.yaxis.get_major_ticks():
-			tick.label.set_fontsize(8)
-		line = pylab.Line2D((732,854.904),(50,50),lw=1,color='k') ##100AU scale bar
-		ax.add_line(line)
-		line = pylab.Line2D((732,732),(45,55),lw=1,color='k')
-		ax.add_line(line)
-		line = pylab.Line2D((854.904,854.904),(45,55),lw=1,color='k')
-		ax.add_line(line)
-		ax.text(800,967,'robust=2',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
-		ax.text(734.122,65,'100 AU',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
-		ax.text(453,967,'49 Ceti',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])#color='k')
-		ax.text(402,920,r'ALMA 850$\mu m$',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
-		ax.text(444,1053,r'$\mu Jy / bm$',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
+        axT.set_xticks(np.arange(-0.0002,.0014001,0.0002))
+        axT.set_xticklabels(range(-200,1401,200),fontsize=7,rotation=30)
+        axT.tick_params(axis='both',which='major',pad=1)
+    if i == 1:
+        axT.set_xticks(np.arange(-.0002,0.0014001,0.0002))
+        axT.set_xticklabels(range(-200,1401,200),fontsize=7,rotation=30)
+        axT.tick_params(axis='both',which='major',pad=1)
+    axT.set_yticks([])
+    axT.set_yticklabels('',visible=False)
+    colbar.set_ticks([])
+    colbar.set_ticklabels([])
+    colbar.ax.set_xticklabels('',visible=False)
+    if ax.is_first_col():
+        ax.set_xlabel(r'$\Delta \alpha$ (")',fontsize=10,labelpad=1)
+        ax.set_ylabel(r'$\Delta \delta$ (")',fontsize=10,labelpad=1)
+        x = ['','-6','','','-3','','','0','','','3','','','6','']
+        ax.set_xticklabels(x)
+        ax.set_yticklabels(x)
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label.set_fontsize(8)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(8)
+        line = pylab.Line2D((732,854.904),(50,50),lw=1,color='k') ##100AU scale bar
+        ax.add_line(line)
+        line = pylab.Line2D((732,732),(45,55),lw=1,color='k')
+        ax.add_line(line)
+        line = pylab.Line2D((854.904,854.904),(45,55),lw=1,color='k')
+        ax.add_line(line)
+        ax.text(450,967,'robust=2',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
+        ax.text(450,920,'with taper',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
+        ax.text(734.122,65,'100 AU',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
+        ax.text(50,967,'49 Ceti',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])#color='k')
+        ax.text(50,920,r'ALMA 850$\mu m$',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
+        ax.text(444,1053,r'$\mu Jy / bm$',fontsize=8,path_effects=[PathEffects.withStroke(linewidth=2,foreground="w")])
 
 
 for i in range(1):

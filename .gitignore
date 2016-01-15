@@ -1,4 +1,3 @@
-*.pdf
 *.bm
 *.cl
 *.cm
@@ -7,26 +6,22 @@
 *.im/
 *.vis
 *.m0
-*.png
 *.fits
 .*.swp
 *~
 .miriadhis
 .mfits.pro.swo
-
+.pro
 *.swo
-
-
-*.eps
-
+*.pdf
 *.dat
-
+*.png
 *.f0
-
+*.eps
 *.info
-
+*.ps
 *.lock
-
+*.pptx
 *.log
 
 *.f0i
@@ -34,8 +29,6 @@
 *.f1
 
 *.f0_TSM0
-
-*.ps
 
 *.f2
 
@@ -68,3 +61,12 @@
 .nfs*
 
 49quit*
+Circular_im_check.py
+deprojectiontest.py
+v2.py
+!49ceti_continuum_image_deprojected.ps
+!49Ceti_continuum_dep_averaged.eps
+!49Ceti_continuum_&_residuals_tapered.png
+!49Ceti_continuum_untapered.png
+!49Ceti_line_dep_averaged.eps
+!49Ceti_line_dep_taper_moment.png
