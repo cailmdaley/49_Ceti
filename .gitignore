@@ -11,7 +11,7 @@
 *~
 .miriadhis
 .mfits.pro.swo
-.pro
+*.pro
 *.swo
 *.pdf
 *.dat
@@ -59,11 +59,15 @@
 *.last
 
 .nfs*
-
+*.swn
 49quit*
+deprojection*
+uv_deprojection.py
 Circular_im_check.py
-deprojectiontest.py
+test.py
 v2.py
+contourPlotter.py
+
 !49ceti_continuum_image_deprojected.ps
 !49Ceti_continuum_dep_averaged.eps
 !49Ceti_continuum_&_residuals_tapered.png
