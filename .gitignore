@@ -51,7 +51,11 @@
 *.f7
 
 *.f7_TSM1
-
+*.cls
+*.tex
+*.log
+*.out
+*.aux
 *.f8
 
 *.f8_TSM1
@@ -74,3 +78,4 @@ contourPlotter.py
 !49Ceti_continuum_untapered.png
 !49Ceti_line_dep_averaged.eps
 !49Ceti_line_dep_taper_moment.png
+!49Ceti_Paper.pdf
