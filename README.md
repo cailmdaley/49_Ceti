@@ -25,5 +25,5 @@ The deprojection code I wrote requires an input .uvf file containing disk data, 
 It can radially average the disk and compare it to a model, plotting flux density as a function of distance from the center of the disk. For example:
 ![Image](/49Ceti_continuum_dep_averaged.png)
 
-It can also produce continuum images, channel maps, or moment maps. Moment map of 49 Ceti created by my code with a gaussian taper applied applied and plotted using code originally written by Jesse Lieman-Sifry:
+It can also produce continuum images, channel maps, or moment maps. An example of a moment map of 49 Ceti created by my code with a gaussian taper applied and plotted using code originally written by Jesse Lieman-Sifry:
 ![Image](/49Ceti_line_dep_taper_moment.png)
